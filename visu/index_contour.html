@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<script type="text/javascript"  src="./d3.min.js"></script>
+<link type="text/css" rel="stylesheet" href="./kmeans.css">
+</head>
+
+<body>
+<div class="left-div"></div>
+<div class="right-div"></div>
+    
+<div id="headercover"> 
+<p class="titlecover"><a href="./index.html">TIME&nbsp;&nbsp;</a><a href="./index_contour.html">LABELS</a></p>  
+</div>
+
+<script type="text/javascript">
+var width = 1400;
+var height = 600;
+    
+var svg = d3.select("div.left-div")
+    .append("svg")
+    .attr("viewBox","0 0 " + width + " " + height) 
+
+var g = svg.append("g");
+var g2 = svg.append("g");
+var g3 = svg.append("g");
+var g4 = svg.append("g");
+    
+var svglabels = d3.select("div.right-div")
+    .append("svg")
+    .attr("viewBox","0 0 " + width + " " + height) 
+
+var f = svglabels.append("g");    
+   
+g3.append("text")
+    .attr("x", 100)
+    .attr("y", 8)
+    .attr("id","inver")
+    .text("Time to Converge")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", 8)
+    .attr("opacity",1)
+    .style("fill", "#999");
+    
+g4.append("text")
+    .attr("x", 0)
+    .attr("y", 230)
+    .attr("id","inver")
+    .text("K")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", 10)
+    .attr("opacity",1)
+    .style("fill", "black");
+    
+g4.append("text")
+    .attr("x", 0)
+    .attr("y", 240)
+    .attr("id","inver")
+    .text("Gridsize Nx x Ny")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", 10)
+    .attr("opacity",1)
+    .style("fill", "#d2d2d2");
+    
+f.append("text")
+    .attr("x", 20)
+    .attr("y", 360)
+    .attr("id","inver")
+    .text("Number of datapoints per cluster")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", 10)
+    .attr("opacity",1)
+    .style("fill", "black");
+    
+var pitch=10
+ 
+d3.json("./Timestamp_50.json", function(error, data) { 
+  
+//g.selectAll("rect").data(data).enter()
+//    .append("rect")
+//    .attr("x", function(d) {return 100;})
+//    .attr("y",function(d) {return 10;})
+//    .attr("height",function(d) {return 100;})
+//    .attr("width",function(d) {return d.time*5;})
+//    .style("opacity",1)
+//    .attr("fill", function(d) {return d3.rgb(d.time*3,d.time,255);}) 
+//    .attr("stroke", "white");
+  
+g.selectAll("line").data(data).enter()
+    .append("line")
+    .attr("x1", function(d) {return 100+d.time*5;})
+    .attr("y1",function(d) {return pitch;})
+    .attr("x2", function(d) {return 100+d.time*5;})
+    .attr("y2",function(d) {return pitch+100;})
+    .style("opacity",1)
+    .attr("stroke-width", function(d) { return(.5)})
+    .attr("stroke", "gray");
+    
+g.selectAll("text").data(data).enter()
+    .append("text")
+    .attr("x", function(d) {return d.index*25;})
+    .attr("y", 200)
+    .attr("id","inver")
+    .text(function(d) {return d.centroid;})
+    .attr("font-family", "sans-serif")
+    .attr("font-size", 10)
+    .attr("opacity",1)
+    .style("fill", "black") ;
+    
+    g2.selectAll("text").data(data).enter()
+    .append("text")
+    .attr("x", function(d) {return d.index*25;})
+    .attr("y", 210)
+    .attr("id","inver")
+    .text(function(d) {return d.gridsize;})
+    .attr("font-family", "sans-serif")
+    .attr("font-size", 10)
+    .attr("opacity",1)
+    .style("fill", "#d2d2d2") ;
+    
+    g2.selectAll("line").data(data).enter()
+    .append("line")
+    .attr("x1", function(d) {return d.index*25;})
+    .attr("y1", 190)
+    .attr("x2", function(d) {return 100+d.time*5;})
+    .attr("y2",function(d) {return pitch+100;})
+    .style("opacity",1)
+    .attr("stroke-width", function(d) { return(.5)})
+    .attr("stroke", "gray");
+    
+})  
+
+d3.json("./Shifts_50.json", function(error, data) { 
+   
+//for (i = 0; i < data.length; i++) {     
+  f.selectAll("rect").data(data).enter()
+    .append("rect")
+    .attr("x", function(d) {return 20+d.order*25;})
+    .attr("y",function(d) {return 0;})
+//    .attr("y",function(d) {return 150-d.shifts/2;})
+    .attr("width",function(d) {return 25;})
+    .attr("height",function(d) {return d.shifts;})
+    .style("opacity",.8)
+    .attr("fill", function(d) {return d3.rgb(d.shifts,150+d.shifts*2,255-d.shifts*3);}) 
+    .attr("stroke", "white");
+//}
+})
+
+//  f.selectAll("rect").data(data).enter()
+//    .append("rect")
+//    .attr("x", function(d) {return 20+d.order*25;})
+//    .attr("y",function(d) {return 0;})
+//    .attr("width",function(d) {return 25;})
+//    .attr("height",function(d) {return d.shifts;})
+//    .style("opacity",.5)
+//    .attr("fill", function(d) {return d3.rgb(d.shifts,100+d.shifts*2,255-d.shifts*2);}) 
+//    .attr("stroke", "white");
+
+</script>
+
+</body></html>

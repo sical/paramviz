@@ -1,0 +1,6 @@
+[{"model":"UnequalVar_EU","num":1},
+{"model":"UnequalVar_CB","num":2},
+{"model":"Mixture2D_EU","num":3},
+{"model":"Mixture2D_CB","num":4},
+{"model":"AnisotropBlob_EU","num":5},
+{"model":"AnisotropBlob_CB","num":6}]

@@ -1,0 +1,15 @@
+p.title {
+    font-family: Rockwell;
+    font-size: 10pt;
+    color: grey;
+}
+
+p.titlede {
+    font-family: Rockwell;
+    font-size: 40px;
+    font-weight: bold;
+    letter-spacing: -3px;
+    top: -90;
+    position: relative;
+    color: grey;
+}

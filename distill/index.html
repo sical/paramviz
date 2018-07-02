@@ -1,0 +1,505 @@
+<!doctype html>
+<meta charset="utf-8">
+<script src="http://distill.pub/template.v1.js"></script>
+<!--<script type="text/javascript"  src="./d3.min.js"></script>-->
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://d3js.org/d3-hsv.v0.1.min.js"></script>
+<script src="https://d3js.org/d3-contour.v1.min.js"></script>
+<script src="./sankey.js"></script>
+
+<link type="text/css" rel="stylesheet" href="./kmeans.css">
+
+<script type="text/front-matter">
+  title: "Cartographies of the unknown"
+  description: "Towards a universal visualization strategy of parameter spaces in data analytics algorithms "
+  authors:
+  - JM: http://graphicprototype.net
+  - RV: http://github.com/romsson
+  - SD: http://github.com/SDerrode
+  affiliations:
+  - LIRIS / EC Lyon: https://liris.cnrs.fr/
+  - LIRIS / EC Lyon: https://liris.cnrs.fr/
+  - LIRIS / EC Lyon: https://liris.cnrs.fr/
+</script>
+
+<dt-article>
+  <h1>A Visual Journey in the K-Means Parameter Space</h1>
+  <h2>Towards a universal visualization strategy of parameter spaces in data analytics' algorithms </h2>
+  <dt-byline></dt-byline>
+<!--    </dt-article>-->
+
+<div class="leftcontourpro-div"></div>
+    
+<script>
+
+var widthpro = 600;
+var heightpro = 600;
+    
+// SVG container for the PhaseSpace, scalable with the browser width    
+var svg = d3.select("div.leftcontourpro-div")
+    .append("svg")
+    .attr("width",widthpro)
+    .attr("height",heightpro);
+    
+var svgtext=svg.append("g");
+
+//var svg = d3.select("svg"),
+//    width = +svg.attr("width"),
+//    height = +svg.attr("height");
+
+var i0 = d3.interpolateHsvLong(d3.hsv(120, 1, 0.65), d3.hsv(60, 1, 0.90)),
+    i1 = d3.interpolateHsvLong(d3.hsv(60, 1, 0.90), d3.hsv(0, 0, 0.95)),
+    interpolateTerrain = function(t) { return t < 0.5 ? i0(t * 2) : i1((t - 0.5) * 2); }
+ var  color = d3.scaleSequential(interpolateTerrain).domain([0, 150]);
+
+d3.json("./Data/ContourPro/unequalvar_euc_vol.json", function(error, volcano) {
+  if (error) throw error;
+
+  svg.selectAll("path")
+    .data(d3.contours()
+    .size([volcano.width, volcano.height])
+    .thresholds(d3.range(0, 50, .9))
+    (volcano.values))
+    .enter().append("path")
+    .attr("d", d3.geoPath(d3.geoIdentity().scale(widthpro / volcano.width)))
+//    .attr("fill", function(d) { return color(d.value); });
+//    .attr("fill", function(d) { return d3.rgb(d.value,d.value,d.value); });
+    .attr("fill", function(d) { 
+      return d3.rgb(255-d.value*4,255-d.value*4,255-d.value); });
+});
+
+d3.json("./All_Contours.json", function(error, data) {
+    
+svgtext.selectAll("text").data(data).enter()
+//    svgtext.selectAll("text").data(data).enter()
+.append("text")
+.attr("x",10)
+.attr("y",function(d){return 5+d.num*12;})
+.text(function(d) {return d.model;})
+.attr("font-family", "Gill Sans Light, Century Gothic, sans-serif")
+.attr("font-size", 12)
+.attr("font-weight", "lighter")
+.attr("opacity", 1)
+.style("fill", "goldenrod")
+.on("mouseover", function() {     
+    d3.select(this).style("cursor", "pointer")
+    d3.select(this).style("fill", "goldenrod")
+    })
+.on("mouseout", function() {     
+    d3.select(this).style("fill", "gray")
+    })
+.on("click",function(d){
+    json_model_ref=list_models[d.num-1];
+    d3.json("./Data/ContourPro/"+json_model_ref, function(error, volcano2) {
+          if (error) throw error;
+        //svg.remove()
+          svg.selectAll("path")
+            .data(d3.contours()
+            .size([volcano2.width, volcano2.height])
+            .thresholds(d3.range(0, 50, .9))
+            (volcano2.values))
+            .transition().duration(2000)
+        //    .enter().append("path")
+            .attr("d", d3.geoPath(d3.geoIdentity().scale(widthpro / volcano2.width)))
+//            .attr("fill", function(d) { 
+           .attr("fill", function(d) { 
+      return d3.rgb(150,150,150); });
+        });              
+    });
+    
+});  
+    
+var list_models = ["./unequalvar_euc_vol.json",
+                   "./unequalvar_cb_vol.json",
+                   "./mixture2D_euc_vol.json",
+                   "./mixture2D_cb_vol.json",
+                   "./anisotropblob_euc_vol.json",
+                   "./anisotropblob_cb_vol.json"
+                  ];     
+    
+</script>  
+
+<p>[J/ Figure 1: In this D3.js block we could show an interactive Phase Space plot choosing between different datasets, distances and seedings. Also on what is shown in the x and y axis. This will give a first idea of how the Phase Space changes and hence how the cartographies change too]</p>
+
+<p>[J/ Then we introduce the topic (one sentence) and we go into a simple example: clustering of datapoint clouds. It must be noticed that the Distill paper "Why Momentum Really Works" never uses more than six text lines per paragraph to keep the flow going]</p>
+
+<p>[J/ So we could start with something like:]</p>
+
+<p>The use of algorithms are widespread nowadays on a broad variety of disciplines, particularly over the last years where the boost of big data analytics demands an intensive use of a diverse ecosystem of mathematical tools <dt-cite key="wu2008top"></dt-cite>. Clustering algorithms, for instance, try to classify datasets into coherent groups. Starting on a distribution of datapoints such as the following:</p>
+
+<img src="./UnequalVar.png" height="200" width="300" style="margin:0px 10px"></img><img src="./UnequalVar.png" height="200" width="300" style="margin:0px 10px"></img><img src="./UnequalVar.png" height="200" width="300" style="margin:0px 10px"></img><img src="./UnequalVar.png" height="200" width="300" style="margin:0px 10px"></img>
+
+<p>[J/ Figure 2: A cloud of datapoints with a hint of three groups or clusters]</p>
+
+<p>The K-means algorithm performs sequential iterations looking to minimise the distance among the datapoints belonging to a pre-defined number of groups or clusters. The algorithm converges consistenly for different initializations on three clusters or solutions:</p>
+
+<p>[J/ Figure 3: Pathways of convergence of the K-means algorithm into solutions. I think we should go beyond the typical K-means animations of the actual clustering. Showing solutions in terms of absolute distance and cluster size straight away respects much more the assumed familiarity of the reader with mathematical concepts]</p>
+
+<p>[J/ Then we briefly introduce the problem:]</p>
+
+<p> However, the optimal pathways the algorithm follows depend on sometimes many parameters that have to be defined. These so-called configurations expand over a wide range of possibilities that have to be somehow explored. </p>
+
+<p>[J/ And the solution:]</p>
+<p>
+Data visualization techniques could help significantly in reducing the parameter space when the whole spectrum of potential solutions of an algorithm is analyzed. 
+We focus on the K-means clustering algorithm to explore different strategies on how to narrow down the parameter space that define the algorithm configuration, including datasets, initial conditions, constraints, etc... 
+
+But most important, we target the role of the human choices within this process in addition to the existing automated process to reduce the parameter space. 
+</p>
+
+<p>[J/ That would end the "abstract" part of the paper. As I mentioned above, I'm using the structure of "Why Momentum Really Work" as a template for ours]</p>
+
+<p>[J/ Now we get deep into K-Means:]</p>
+
+<p>
+
+<i><b>The K-means algorithm</b> </i></br></br>
+
+It represents one of the most used mathematical routine for cluster analysis nowadays.  </br> </br>
+
+The objective of the K-means algorithm is to distribute the input data into a discrete number of clusters K. For this, an initial position for the K centers is defined in the data space. The datapoints are associated with the nearest center, and the centroid for each of the K groups is calculated. The first iteration reassigns the datapoints which belong to each of the K clusters based on the centroids and recalculates the new centroids based on the new distribution of datapoints. Once there is no variation on the position of the centroids, the algorithm is assumed to have reached a solution. The initial datapoints are hence distributed into K clusters. </p>
+
+<p>In the K-means algorithm we can define the parameter space and assign different variables to the input data, algorithm parameters and algorithm output. In this way the entirety of the parameter space can be described with all possible avenues the algorithm can explore. 
+</p>
+
+<div class="leftsankey-div"></div>
+    
+<script>
+
+var widthsan = 900;
+var heightsan = 400;
+    
+// SVG container for the PhaseSpace, scalable with the browser width    
+var svgsan = d3.select("div.leftsankey-div")
+    .append("svg")
+    .attr("width",widthsan)
+    .attr("height",heightsan)
+.attr("transform", function(d) { return "translate(" + 120 + "," + 0 + ")"; });
+    
+var svgsantext=svgsan.append("g");
+    
+var sankey = d3.sankey()
+    .nodeWidth(2)
+    .nodePadding(10)
+    .size([widthsan, heightsan]);
+
+var path = sankey.link();
+    
+    var formatNumber = d3.format(",.0f"),
+    format = function(d) { return formatNumber(d) + " Gc/yr"; },
+    color = d3.schemeCategory20;
+
+d3.json("./zoo_data.json", function(zoop) {
+
+  sankey
+      .nodes(zoop.nodes)
+      .links(zoop.links)
+      .layout(52);
+
+  var link = svgsan.append("g").selectAll(".link")
+      .data(zoop.links)
+    .enter().append("path")
+      .attr("class", "link")
+      .attr("d", path)
+      .style("stroke-width", function(d) { return Math.max(1, d.dy); })
+      .sort(function(a, b) { return b.dy - a.dy; });
+
+  link.append("title")
+      .text(function(d) { return d.source.name + " to " + d.target.name + "\n" + format(d.value); });
+
+  var node = svgsan.append("g").selectAll(".node")
+      .data(zoop.nodes)
+    .enter().append("g")
+      .attr("class", "node")
+      .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
+//    .call(d3.drag()
+//      .origin(function(d) { return d; })
+//      .on("dragstart", function() { this.parentNode.appendChild(this); })
+//      .on("drag", dragmove));
+
+  node.append("rect")
+      .attr("height", function(d) { return d.dy; })
+      .attr("width", sankey.nodeWidth())
+      // .style("fill", function(d) { return d.color = color(d.name.replace(/ .*/, "")); })
+      // .style("stroke", function(d) { return d3.rgb(d.color).darker(2); })   
+      .style("fill", function(d) { return d3.rgb(200,200,d.color)})
+      .style("stroke", function(d) { return d3.rgb(200,200,d.color)})   
+    .append("title")
+      .text(function(d) { return d.name + "\n" + format(d.value); });
+
+  node.append("text")
+      .attr("x", -6)
+      .attr("y", function(d) { return d.dy / 2; })
+      .attr("dy", ".35em")
+//      .attr("font-size",40)
+      .attr("text-anchor", "end")
+      .attr("transform", null)
+      .text(function(d) { return d.name; })
+    .filter(function(d) { return d.x < widthsan / 2; })
+      .attr("x", 6 + sankey.nodeWidth())
+      .attr("text-anchor", "start");
+
+  function dragmove(d) {
+    d3.select(this).attr("transform", "translate(" + d.x + "," + (d.y = Math.max(0, Math.min(height - d.dy, d3.event.y))) + ")");
+    sankey.relayout();
+    link.attr("d", path);
+  }
+});
+    
+</script>  
+
+<!--<img src="./Input_Output_Diagram.jpeg" height="400" width="700" style="margin:0px 150px"></img>-->
+
+<p>[J/ Figure 4: This figure illustrates the input, output and algorithm pipelines. And how choices in the algorithm parameter space influences the output space. Originally the blue color was intended to show choices made automatically, and dark blue the choices ultimately made by the human on the subset selected by automatic processes]</p>
+
+<p>[J/ Then we dive a bit deeper into theoretical concepts: ]</p>
+
+<p>
+<i><b>The parameter space</b> </i></br></br>
+    The parameter space is split into: </br>
+
+<ul>
+ <li>Input data: Considering the aim of the algorithm, there is a prerequisite about the input data that assumes that a discrete number of groups exists in the original dataset. We can define the input data in the K-means algorithm as N elements distributed in a d-dimensional space. The number of dimensions d establishes the first parameter, where d = {1, ..., W }. </li> 
+
+<li>Parameters:
+
+In K-means it is necessary to define the K number of clusters as K = {1, ..., N }, where N is the number of datapoints and defines the range over which K can expand. As a consequence, there are intrinsic boundaries for the ratio between K and N, particularly K/N ∈ {1/N, 1}.</br>
+
+K-means is based on the optimization of the variance between datapoints and the K centers. The variance is based on the distance, and therefore the concept itself of distance is another variable that we can consider within the parameter space. Conventional K-means routines are based on the Euclidean distance. However, the algortihm gives room to the use of non-euclidean distances such as City Block as long as the variance is computed. There are other definition of distances that apply to the optimization process withing K-means </br>
+
+The parameter space regarding the intrinsic algorithm variables can be completed with the number of iterations. The number of iterations is given in K-means by the convergence of the algorithm towards a solution where the recalculation of the centroids provides the same number between two consecutive iterations.  
+</li>
+
+<li>Output:
+
+In the case of K-means, the output parameter space is mainly defined by the range of possible solutions in terms of: </br></br>
+
+<ul>
+  <li>A number of iterations M for each possible solution. The K-means algorithm converges in all cases for this particular parameter the range over which spans is finite.</li>
+  <li>A final distance F for the K clusters </li>
+  <li>Number G of final distances F for different combinations of K within the Di partitions. </li>
+     <li>Changing datapoints J among clusters in-between the M iterations. The range of J could be defined by J={0,...,N−1}. </li>
+</ul>
+</ul></li>
+  
+<div class="leftcontour-div"></div>    
+
+<script type="text/javascript">
+var width = 1400;
+var height = 600;
+    
+// SVG container for the PhaseSpace, scalable with the browser width    
+var svgcontour = d3.select("div.leftcontour-div")
+    .append("svg")
+    .attr("width",width)
+.attr("height",height)
+.attr("transform", function(d) { return "translate(" + 120 + "," + 0 + ")"; });
+
+var gcontour = svgcontour.append("g");
+    
+// Definition of the line in D3.js. Limits should be dynamic with the data.length. TBD        
+var x = d3.scaleLinear().range([0, width/1.5]).domain([0, 700]);
+var y = d3.scaleLinear().range([0, height]).domain([5000,2000]);
+
+var xAxis = d3.axisBottom(x).ticks(20);
+var yAxis = d3.axisLeft(y).ticks(10);
+
+var theline = d3.line()
+.curve(d3.curveBasis)
+//.interpolate("basis")
+.x(function(d) { return x(d.phase_x); })
+.y(function(d) { return y(d.phase_y);});
+    
+// Add axis to the plot    
+//gcontour.append("g")
+//.attr("class", "axis")
+//.attr('transform', 'translate(' + (10) + ',20)')
+//.call(yAxis); 
+gcontour.append("g")
+.attr("class", "axis")
+.attr('transform', 'translate(10,' + (height-30) + ')')
+.call(xAxis)
+    
+// Loop over the number of initializations
+for (k = 0; k < 90; k++) {     
+    
+    // Loop over the number of clusters, hence number of lines for each init
+    for (i = 0; i < 3; i++) {     
+//        d3.json("./Data/Contour/UnequalVar_Contour_"+k+"_"+i+".json", function(error, data) { 
+        d3.json("./Data/AnisotropBlob_PhaseSpace_"+k+"_"+i+".json", function(error, data) { 
+ 
+            var dataNest = d3.nest()
+            .key(function(d) {return d.group;})
+            .entries(data);   
+
+            dataNest.forEach(function(d) {    
+                var path = svgcontour.append("path")
+                .attr("class", "line")
+                .style("stroke-width","1px")
+                .attr("opacity",1)
+                .style("stroke",function(){return d3.rgb(0,0,0);})
+                .attr("d", theline(data));
+
+                var totalLength = path.node().getTotalLength();
+
+                path
+                .attr("stroke-dasharray", totalLength + " " + totalLength)
+                .attr("stroke-dashoffset", totalLength)
+                .transition()
+                .duration(5000)
+                .ease(d3.easeLinear)
+                .attr("stroke-dashoffset", 0);
+            })
+        })    
+    }
+}
+    
+</script>
+
+
+<!--
+<div class="left-div"></div>
+
+<script type="text/javascript">
+var width = 1400;
+var height = 300;
+    
+// SVG container for the PhaseSpace, scalable with the browser width    
+var svg = d3.select("div.left-div")
+    .append("svg")
+    .attr("width",width)
+.attr("height",height);
+
+var g = svg.append("g");
+    
+// Definition of the line in D3.js. Limits should be dynamic with the data.length. TBD        
+var x = d3.scale.linear().range([0, width/1.5]).domain([0, 1000]);
+var y = d3.scale.linear().range([0, height]).domain([6000,2000]);
+
+var xAxis = d3.svg.axis().scale(x).orient("bottom").ticks(20);
+var yAxis = d3.svg.axis().scale(y).orient("right").ticks(10);
+
+var theline = d3.svg.line()
+.interpolate("basis")
+.x(function(d) { return x(d.phase_x); })
+.y(function(d) { return y(d.phase_y);});
+    
+// Add axis to the plot    
+g.append("g")
+.attr("class", "axis")
+.attr('transform', 'translate(' + (10) + ',20)')
+.call(yAxis); 
+g.append("g")
+.attr("class", "axis")
+.attr('transform', 'translate(10,' + (height-30) + ')')
+.call(xAxis)
+    
+// Loop over the number of initializations
+for (k = 0; k < 44; k++) {     
+    
+    // Loop over the number of clusters, hence number of lines for each init
+    for (i = 0; i < 1; i++) {     
+        d3.json("./Data/AnisotropBlob_PhaseSpace_"+k+"_"+i+".json", function(error, data) { 
+            console.log(data.length)
+ 
+            var dataNest = d3.nest()
+            .key(function(d) {return d.group;})
+            .entries(data);   
+
+            dataNest.forEach(function(d) {    
+                var path = svg.append("path")
+                .attr("class", "line")
+                .style("stroke-width","1px")
+                .attr("opacity",1)
+                .style("stroke",function(){return d3.rgb(0,0,0);})
+                .attr("d", theline(data));
+
+                var totalLength = path.node().getTotalLength();
+
+                path
+                .attr("stroke-dasharray", totalLength + " " + totalLength)
+                .attr("stroke-dashoffset", totalLength)
+                .transition()
+                .duration(5000)
+                .ease("linear")
+                .attr("stroke-dashoffset", 0);
+            })
+        })    
+    }
+}
+    
+</script>
+-->
+
+
+<p>[J/ I stop here as more sophisticated visualizations have to be developed for each individual parameter to move on]</p>
+
+</dt-article>
+
+<dt-appendix>
+</dt-appendix>
+
+<script type="text/bibliography">
+
+  @inproceedings{behrisch2014feedback,
+  title={Feedback-driven interactive exploration of large multidimensional data supported by visual classifier},
+  author={Behrisch, Michael and Korkmaz, Fatih and Shao, Lin and Schreck, Tobias},
+  booktitle={Visual Analytics Science and Technology (VAST), 2014 IEEE Conference on},
+  pages={43--52},
+  year={2014},
+  organization={IEEE}
+}
+
+@article{gleicher2013explainers,
+  title={Explainers: Expert explorations with crafted projections},
+  author={Gleicher, Michael},
+  journal={IEEE Transactions on Visualization and Computer Graphics},
+  volume={19},
+  number={12},
+  pages={2042--2051},
+  year={2013},
+  publisher={IEEE}
+}
+
+@article{pretorius2011visualization,
+  title={Visualization of parameter space for image analysis},
+  author={Pretorius, A Johannes and Bray, Mark-Anthony and Carpenter, Anne E and Ruddle, Roy A},
+  journal={IEEE Transactions on Visualization and Computer Graphics},
+  volume={17},
+  number={12},
+  pages={2402--2411},
+  year={2011},
+  publisher={IEEE}
+}
+
+@inproceedings{cancino2012evographdice,
+  title={Evographdice: Interactive evolution for visual analytics},
+  author={Cancino, Waldo and Boukhelifa, Nadia and Lutton, Evelyne},
+  booktitle={Evolutionary Computation (CEC), 2012 IEEE Congress on},
+  pages={1--8},
+  year={2012},
+  organization={IEEE}
+}
+
+@article{sedlmair2014visual,
+  title={Visual parameter space analysis: A conceptual framework},
+  author={Sedlmair, Michael and Heinzl, Christoph and Bruckner, Stefan and Piringer, Harald and M{\"o}ller, Torsten},
+  journal={IEEE Transactions on Visualization and Computer Graphics},
+  volume={20},
+  number={12},
+  pages={2161--2170},
+  year={2014},
+  publisher={IEEE}
+}
+
+@article{wu2008top,
+  title={Top 10 algorithms in data mining},
+  author={Wu, Xindong and Kumar, Vipin and Quinlan, J Ross and Ghosh, Joydeep and Yang, Qiang and Motoda, Hiroshi and McLachlan, Geoffrey J and Ng, Angus and Liu, Bing and Philip, S Yu and others},
+  journal={Knowledge and information systems},
+  volume={14},
+  number={1},
+  pages={1--37},
+  year={2008},
+  publisher={Springer}
+}
+</script>

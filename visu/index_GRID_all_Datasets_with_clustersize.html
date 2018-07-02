@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<script type="text/javascript"  src="./d3.min.js"></script>
+<link type="text/css" rel="stylesheet" href="./kmeans.css">
+</head>
+
+<body>
+<div class="data-div">
+    <div class="option"><img height="150" width="200" src="./UnequalVar.png"></img>
+    <p class="plaintext">Unequal</p></div>
+    <div class="option"><img height="150" width="200" src="./Mixture2D.png"></img><p class="plaintext">Mixture</p></div>
+    <div class="option"><img height="150" width="200" src="./SizedBlobs.png"></img><p class="plaintext">SizedBlobs</p></div>
+    <div class="option"><img height="150" width="200" src="./AnisotropBlob.png"></img><p class="plaintext">AnisotropBlob</p></div>
+    </div>
+<div class="left-div"></div>
+<div class="right-div"></div>
+
+<script type="text/javascript">
+    
+//-----------------------------------------------------------------CONTAINERS
+
+// Size of the SVG
+var width = 1400;
+var height = 600;
+    
+
+// Container sizeable with the window width, thanks to the viewbox in sync with 
+// a 100% width in the div definition in the CSS
+var svg = d3.select("div.left-div")
+    .append("svg")
+    .attr("viewBox","0 0 " + width + " " + height) 
+
+var g = svg.append("g");
+var g2 = svg.append("g");
+var g3 = svg.append("g");
+var g4 = svg.append("g");
+    
+var svglabels = d3.select("div.right-div")
+    .append("svg")
+    .attr("viewBox","0 0 " + width + " " + height) 
+
+var f = svglabels.append("g"); 
+    
+    
+// SVG to show the dataset options in order to update the data shown 
+var svgdatasets = d3.select("div.data-div")
+    .append("svg")
+    .attr("viewBox","0 0 " + width + " " + height) 
+
+var h0 = svgdatasets.append("g"); 
+var h1 = svgdatasets.append("g"); 
+    
+//-------------------------------------------------------------DATA BUTTONS
+    
+d3.json("./Data_GRID/all_datasets.json", function(error, data) { 
+h0.selectAll("text").data(data).enter()
+.append("text")
+.attr("y", 70)
+.attr("x", function(d){return (20+(d.index-1)*160)})
+.text(function(d){return(d.dataset)})
+.attr("font-family", "Arial,Arial, sans-serif")
+.attr("font-size", 10)
+.style("fill", "#999")
+.on("mouseover",function(d) {
+    d3.select(this).style("cursor", "pointer")})
+
+// Interactivity on clicking the dataset names    
+.on("click", function(d){
+    d3.select(this).style("fill","#333")
+    // Selection of the attributes in each dataset
+    json_grid_size=list_grid_size[d.index-1];
+    json_timestamp=list_timestamp[d.index-1];
+    
+    // Update of the size of clusters depending on the dataset
+    d3.json(json_grid_size, function(error, data) { 
+        f.selectAll("rect").data(data).transition().duration(2000)
+        .attr("x", function(d) {return 20+d.order*25;})
+        .attr("y",function(d) {return 444-(d.position/3)-(d.shifts/3);})
+        .attr("height",function(d) {return d.shifts/3;})
+//        .attr("fill", function(d) {return d3.rgb(d.shifts,150+d.shifts*2,255-d.shifts*3);}) 
+        .attr("fill", function(d) {return d3.rgb(200,200,200);}) 
+    });
+    
+    // Update of the computing time for each GRID size in each dataset
+    d3.json(json_timestamp, function(error, data) { 
+
+        g.selectAll("rect").data(data).transition().duration(2000)
+        .attr("width",function(d) {return d.time*2;})
+        .attr("fill", function(d) {return d3.rgb(d.time,255-d.time/2,255);}) 
+        g.selectAll("line").data(data).transition().duration(2000)
+        .attr("x1", function(d) {return 100+d.time*2;})
+        .attr("x2", function(d) {return 100+d.time*2;})
+        g2.selectAll("line").data(data).transition().duration(2000)
+        .attr("x1", function(d) {return d.index*25;})
+        .attr("x2", function(d) {return 100+d.time*2;})
+   });
+})
+});
+   
+//-------------------------------------------------------------TITLES
+    
+g3.append("text")
+    .attr("x", 100)
+    .attr("y", 8)
+    .attr("id","inver")
+    .text("Computing Time")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", 8)
+    .attr("opacity",1)
+    .style("fill", "#333");
+    
+g4.append("text")
+    .attr("x", 0)
+    .attr("y", 100)
+    .attr("id","inver")
+    .text("K")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", 8)
+    .attr("opacity",1)
+    .style("fill", "black");
+    
+g4.append("text")
+    .attr("x", 0)
+    .attr("y", 110)
+    .attr("id","inver")
+    .text("Gridsize Nx x Ny")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", 8)
+    .attr("opacity",1)
+    .style("fill", "black");
+     
+f.append("text")
+    .attr("x", 20)
+    .attr("y", 110)
+    .attr("id","inver")
+    .text("Number of datapoints per cluster per configuration")
+    .attr("font-family", "sans-serif")
+    .attr("font-size", 8)
+    .attr("opacity",1)
+    .style("fill", "black");
+
+var pitch=10
+ 
+//-------------------------------------------------------------TIMESTAMP
+
+// Computing time in the form of horizontal rectangles proportional to the 
+// convergence time estimated by the Python script. 
+d3.json("./Data_GRID/Unequal_Timestamp_50.json", function(error, data) { 
+  
+g.selectAll("rect").data(data).enter()
+    .append("rect")
+    .attr("x", function(d) {return 100;})
+    .attr("y",function(d) {return 10;})
+    .attr("height",function(d) {return 25;})
+    .attr("width",function(d) {return d.time*2;})
+    .style("opacity",1)
+    .attr("fill", function(d) {return d3.rgb(d.time,255-d.time/2,255);}) 
+    .attr("stroke", "white");
+  
+g.selectAll("line").data(data).enter()
+    .append("line")
+    .attr("x1", function(d) {return 100+d.time*2;})
+    .attr("y1",function(d) {return pitch;})
+    .attr("x2", function(d) {return 100+d.time*2;})
+    .attr("y2",function(d) {return pitch+50;})
+    .style("opacity",.4)
+    .attr("stroke-width", function(d) { return(.5)})
+    .attr("stroke", "white");
+    
+g2.selectAll("line").data(data).enter()
+    .append("line")
+    .attr("x1", function(d) {return d.index*25;})
+    .attr("y1", 120)
+    .attr("x2", function(d) {return 100+d.time*2;})
+    .attr("y2",function(d) {return pitch+25;})
+    .style("opacity",1)
+    .attr("stroke-width", function(d) { return(.5)})
+    .attr("stroke", "#d2d2d2");
+    
+g.selectAll("text").data(data).enter()
+    .append("text")
+    .attr("x", function(d) {return d.index*25;})
+    .attr("y", 130)
+    .attr("id","inver")
+    .text(function(d) {return d.centroid;})
+    .attr("font-family", "sans-serif")
+    .attr("font-size", 10)
+    .attr("opacity",1)
+    .style("fill", "black") ;
+    
+//-------------------------------------------------------------UPDATE CLUSTERS WITHIN
+
+// For each permutation of the centroids within the GRID, there is a resulting 
+// distribution of the clusters in terms of size, or number of datapoints 
+// assigned to each cluster. This is similar to the big one shown afterwards, 
+// but this time linked to each permutation. In the big one, only the first
+// permutation is shown. 
+    
+g2.selectAll("text").data(data).enter()
+    .append("text")
+    .attr("x", function(d) {return d.index*25;})
+    .attr("y", 140)
+    .attr("id","inver")
+    .text(function(d) {return d.gridsize;})
+    .attr("font-family", "sans-serif")
+    .attr("font-size", 10)
+    .attr("opacity",1)
+    .on("mouseover",function(d) {
+        d3.select(this).style("cursor", "pointer")})
+    .on("click", function(d){
+        d3.select(this).style("fill","black")
+        j0.selectAll("rect").remove();
+        j1.selectAll("line").remove();
+        j1.selectAll("text").remove();
+        json_grid_size='./Data/AnisotropBlob_ShiftsPos_Within_'+d.index+'.json'
+        console.log(json_grid_size)
+        d3.json(json_grid_size, function(error, data) { 
+            j0.selectAll("rect").data(data).enter()
+            .append("rect")
+            .attr("x", function(d) {return 20+(d.order*25)+d.suborder*10;})
+            .attr("y",function(d) {return 220-(d.position/5)-(d.shifts/5);})
+            .attr("height",function(d) {return d.shifts/5;})
+            .attr("width",function(d) {return 10;})
+//            .attr("fill", function(d) {return d3.rgb(255-d.shifts/2,250+d.shifts/2,255-d.shifts/3);}) 
+            .attr("fill", function(d) {return d3.rgb(200,200,200);}) 
+            .attr("stroke", "white");
+            
+            j1.selectAll("line").data(data).enter()
+            .append("line")
+            .attr("x1", function(d) {return d.iterations*30;})
+            .attr("y1", 0)
+            .attr("x2", function(d) {return d.iterations*30;})
+            .attr("y2",function(d) {return 10;})
+            .style("opacity",1)
+            .attr("stroke-width", function(d) { return(2)})
+            .attr("stroke", function(d) {return d3.rgb(d.iterations,255-d.iterations/2,255);}) 
+
+            j1.selectAll("text").data(data).enter()
+            .append("text")
+            .attr("x", function(d) {return 3+d.iterations*30;})
+            .attr("y", 5)
+            .attr("id","inver")
+            .text(function(d) {return d.iterations;})
+            .attr("font-family", "sans-serif")
+            .attr("font-size", 7)
+            .attr("opacity",.7)
+            .style("fill", "black") ;
+
+        });      
+})
+    .style("fill", "#d2d2d2");
+})  
+
+//-------------------------------------------------------------CLUSTERS OVERALL
+
+// This structure illustrates the cluster size, stacked one on top of the other 
+// for each GRID configuration. This structure allows the visualization of the 
+// cluster size for each configuration, taking the first permutation in all 
+// the GRID seeding possibilities. 
+    
+d3.json("./Data_GRID/Unequal_ShiftsPos_50.json", function(error, data) { 
+   
+  f.selectAll("rect").data(data).enter()
+    .append("rect")
+    .attr("x", function(d) {return 20+d.order*25;})
+    .attr("y",function(d) {return 444-(d.position/3)-(d.shifts/3);})
+    .attr("width",function(d) {return 25;})
+    .attr("height",function(d) {return d.shifts/3;})
+    .style("opacity",1)
+    .attr("fill", function(d) {return d3.rgb(200,200,200);}) 
+    .attr("stroke", "white");
+
+})
+
+// Lists to support the data pick. 
+var list_grid_size = ["./Data_GRID/Unequal_ShiftsPos_50.json",
+                   "./Data_GRID/Mixture_ShiftsPos_50.json",
+                   "./Data_GRID/ShiftsPos_50.json",
+                   "./Data_GRID/Anis_ShiftsPos_50.json"];
+    
+var list_timestamp = ["./Data_GRID/Unequal_Timestamp_50",
+                   "./Data_GRID/Mixture_Timestamp_50.json",
+                   "./Data_GRID/Timestamp_50.json",
+                   "./Data_GRID/Anisotrop_Timestamp_50.json"];
+    
+</script>
+
+</body></html>

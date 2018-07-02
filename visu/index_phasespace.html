@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<script type="text/javascript"  src="./d3.min.js"></script>
+<link type="text/css" rel="stylesheet" href="./kmeans.css">
+</head>
+
+<body>    
+<div class="left-div"></div>
+
+<script type="text/javascript">
+var width = 1200;
+var height = 400;
+    
+// SVG container for the PhaseSpace, scalable with the browser width thanks
+// to the viewBox function in sync with the CSS attribute for the width (100%)
+var svg = d3.select("div.left-div")
+    .append("svg")
+    .attr("viewBox","0 0 " + width + " " + height) 
+
+var g = svg.append("g");
+var g2 = svg.append("g");
+    
+// Definition of the line in D3.js. Limits should be dynamic with the data.length. TBD 
+// The limits for the moment are customized for the UnequalVar (8k to 1k)
+// In case the other datasets are used, please uncomment the y line below with
+// the new levels (6k to 2k)
+    
+var x = d3.scale.linear().range([0, width*.8]).domain([0, 1000]);
+var y = d3.scale.linear().range([0, height]).domain([8000,5000]);
+//var y = d3.scale.linear().range([0, height]).domain([6000,2000]);
+
+// This is the syntax for D3.v3, not the D3.v4. Careful, as many of these 
+// commands change for D3.v4 particularly for lines and areas
+    
+var xAxis = d3.svg.axis().scale(x).orient("bottom").ticks(20);
+var yAxis = d3.svg.axis().scale(y).orient("right").ticks(10);
+
+var theline = d3.svg.line()
+.interpolate("basis")
+.x(function(d) { return x(d.phase_x); })
+.y(function(d) { return y(d.phase_y);});
+    
+// Add X and Y axis to the plot    
+g.append("g")
+.attr("class", "axis")
+.attr('transform', 'translate(' + (10) + ',20)')
+.call(yAxis); 
+g.append("g")
+.attr("class", "axis")
+.attr('transform', 'translate(10,' + (height-30) + ')')
+.call(xAxis)
+    
+// Loop over the number of initializations
+// This of course depends on how many initiatizations have been generated in Python
+for (k = 0; k < 99; k++) {     
+    
+    // Loop over the number of clusters, hence number of lines for each init
+    // Each initialization generates three trajectories, each associated with each cluster
+    for (i = 0; i < 3; i++) {     
+        d3.json("./Data_PhaseSpace/UnequalVar_PhaseSpace_"+k+"_"+i+".json", function(error, data) { 
+            
+//        Other datasets are enabled uncommenting the following lines:             
+//        d3.json("./Data_PhaseSpace/Mixture2D_PhaseSpace_"+k+"_"+i+".json", function(error, data) { 
+//        d3.json("./Data_PhaseSpace/AnisotropBlob_PhaseSpace_"+k+"_"+i+".json", function(error, data) { 
+            var dataNest = d3.nest()
+            .key(function(d) {return d.group;})
+            .entries(data);
+            
+            // We generate the lines for each trajectory            
+            dataNest.forEach(function(d) {    
+                var path = svg.append("path")
+                .attr("class", "line")
+                .style("stroke-width","1px")
+                .attr("opacity",1)
+                .style("stroke",function(){return d3.rgb(0,0,0);})
+                .attr("d", theline(data))
+
+                // This function allows the animation on creating the lines sequencially. 
+                var totalLength = path.node().getTotalLength();
+
+                path
+                .attr("stroke-dasharray", totalLength + " " + totalLength)
+                .attr("stroke-dashoffset", totalLength)
+                .transition()
+                .duration(5000)
+                .ease("linear")
+                .attr("stroke-dashoffset", 0);
+            })
+        })
+    }
+}
+    
+</script>
+
+</body></html>

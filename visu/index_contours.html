@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script src="https://d3js.org/d3-hsv.v0.1.min.js"></script>
+<script src="https://d3js.org/d3-contour.v1.min.js"></script>
+<link type="text/css" rel="stylesheet" href="./kmeans.css">
+</head>
+
+<body>
+<div class="left-div"></div>
+    
+<script type="text/javascript">
+    
+// SVG size for the Contours:  
+var widthpro = 800;
+var heightpro = 800;
+    
+// SVG container for the Contours on a single div.  
+var svg = d3.select("div.left-div")
+    .append("svg")
+    .attr("width",widthpro)
+    .attr("height",heightpro);
+    
+// SVG container for the dataset options:
+var svgtext=svg.append("g");
+    
+// Interpolation for the contours taken from Bostock's contours.
+// https://bl.ocks.org/mbostock/4241134
+var i0 = d3.interpolateHsvLong(d3.hsv(120, 1, 0.65), d3.hsv(60, 1, 0.90)),
+    i1 = d3.interpolateHsvLong(d3.hsv(60, 1, 0.90), d3.hsv(0, 0, 0.95)),
+    interpolateTerrain = function(t) { return t < 0.5 ? i0(t * 2) : i1((t - 0.5) * 2); }
+var  color = d3.scaleSequential(interpolateTerrain).domain([0, 150]);
+
+// Read the data from the JSON file. The JSON file specifies the width and the height, and the 
+// values associated from top to bottom to that grid size (width x height). This JSON is 
+// done manually, it has a particular structure because of that. 
+d3.json("./Data_Contour/unequalvar_euc_vol.json", function(error, volcano) {
+  if (error) throw error;
+
+// Function that creates the contours. It is defined by its width and height. Most important
+// here is the threshold to define the minimum and the interval. 
+  svg.selectAll("path")
+    .data(d3.contours()
+    .size([volcano.width, volcano.height])
+    .thresholds(d3.range(0, 100, .9))
+    (volcano.values))
+    .enter().append("path")
+    .attr("d", d3.geoPath(d3.geoIdentity().scale(widthpro / volcano.width)))
+    .attr("fill", function(d) { 
+      return d3.rgb(255-d.value*4,255-d.value*4,255-d.value); });
+});
+
+    
+// Complementary JSON file with the name of the datasets to generate the 
+// interactive choice of these datasets. 
+d3.json("./All_Contours.json", function(error, data) {
+    
+svgtext.selectAll("text").data(data).enter()
+.append("text")
+.attr("x",10)
+.attr("y",function(d){return 5+d.num*12;})
+.text(function(d) {return d.model;})
+.attr("font-family", "Gill Sans Light, Century Gothic, sans-serif")
+.attr("font-size", 12)
+.attr("font-weight", "lighter")
+.attr("opacity", 1)
+.style("fill", "goldenrod")
+    
+// Basic highlight response to mouse events 
+.on("mouseover", function() {     
+    d3.select(this).style("cursor", "pointer")
+    d3.select(this).style("fill", "goldenrod")
+    })
+.on("mouseout", function() {     
+    d3.select(this).style("fill", "gray")
+    })
+    
+// Update of the contours wit the newest dataset selected
+.on("click",function(d){
+    json_model_ref=list_models[d.num-1];
+    d3.json("./Data_Contour/"+json_model_ref, function(error, volcano2) {
+          if (error) throw error;
+          svg.selectAll("path")
+            .data(d3.contours()
+            .size([volcano2.width, volcano2.height])
+            .thresholds(d3.range(0, 100, .9))
+            (volcano2.values))
+            .transition().duration(2000)
+            .attr("d", d3.geoPath(d3.geoIdentity().scale(widthpro / volcano2.width)))
+           .attr("fill", function(d) { 
+      return d3.rgb(150,150,150); });
+        });              
+    });
+    
+});  
+    
+// List to help the interactivity when clicking an option and call the new dataset. 
+// For some reason, index of JSON files are not transferable into inner functions. 
+// In this case lists are very helpful as counters instead of the index. 
+var list_models = ["./unequalvar_euc_vol.json",
+                   "./unequalvar_cb_vol.json",
+                   "./mixture2D_euc_vol.json",
+                   "./mixture2D_cb_vol.json",
+                   "./anisotropblob_euc_vol.json",
+                   "./anisotropblob_cb_vol.json"
+                  ];    
+    
+</script>
+
+</body></html>
